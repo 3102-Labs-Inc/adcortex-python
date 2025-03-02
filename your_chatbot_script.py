@@ -20,7 +20,7 @@ session_info = SessionInfo(
     )
 )
 
-chat_client = AdcortexChatClient(session_info=session_info)
+chat_client = AdcortexChatClient(session_info=session_info, num_messages_before_ad=3, num_messages_between_ads=10)
 
 # Simulate adding messages
 chat_client.add_message(role="user", content="I'm looking for a new gaming setup.")

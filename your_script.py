@@ -28,7 +28,13 @@ client = AdcortexClient(session_info=session_info)
 # Prepare messages
 messages = [
     Message(role="ai", content="I'm looking for a desk setup for my gaming. It should be more ergonomic!!"),
-    Message(role="user", content="Preferably something under $500.")
+    Message(role="user", content="Preferably something under $500."),
+    Message(role="ai", content="I'm looking for a desk setup for my gaming. It should be more ergonomic!!"),
+    Message(role="user", content="Preferably something under $500."),
+    Message(role="ai", content="I'm looking for a desk setup for my gaming. It should be more ergonomic!!"),
+    Message(role="user", content="Preferably something under $500."),
+    Message(role="ai", content="I'm looking for a desk setup for my gaming. It should be more ergonomic!!"),
+    Message(role="user", content="Preferably something under $500."),
 ]
 
 # Measure latency and fetch ad
