@@ -3,9 +3,12 @@ import os
 from typing import Optional, List
 import requests
 from dataclasses import asdict
+from dotenv import load_dotenv
 
-from adcortex.types import SessionInfo, Message, Ad
+from src.adcortex.types import SessionInfo, Message, Ad
 
+# Load environment variables from .env file
+load_dotenv()
 
 # TODO: Fill up the Default Context Template
 DEFAULT_CONTEXT_TEMPLATE = """
@@ -21,11 +24,11 @@ class AdcortexClient:
     ):
         self.session_info = session_info
         self.context_template = context_template
-        self.api_key = api_key or os.getenv("ADCORTES_API_KEY")
+        self.api_key = api_key or os.getenv("ADCORTEX_API_KEY")
         self.base_url = "https://adcortex.3102labs.com/ads/match"
 
         if not self.api_key:
-            raise ValueError("ADCORTES_API_KEY is not set and not provided")
+            raise ValueError("ADCORTEX_API_KEY is not set and not provided")
         
         self.headers = {
             "Content-Type": "application/json",
@@ -34,8 +37,11 @@ class AdcortexClient:
 
     def _generate_payload(self, messages: List[Message]) -> dict:
         payload = {
+            "RGUID": self.session_info.session_id,
             "session_info": asdict(self.session_info),
-            "messages": [asdict(message) for message in messages]
+            "user_data": asdict(self.session_info.user_info),
+            "messages": [asdict(message) for message in messages],
+            "platform": asdict(self.session_info.platform),
         }
         return payload
     
@@ -44,7 +50,10 @@ class AdcortexClient:
         payload = self._generate_payload(messages)
         response = requests.post(self.base_url, headers=self.headers, json=payload)
         response.raise_for_status()
-        return Ad(**response.json())
+        
+        # Extract the ad from the response
+        ad_data = response.json().get('ads', [{}])[0]  # Get the first ad or an empty dict if not found
+        return Ad(**ad_data)  # Unpack the ad data into the Ad constructor
 
     # NOTE: @Rahul review this for functionality
     def generate_context(self, ad: Ad) -> str:
