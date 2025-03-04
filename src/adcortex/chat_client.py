@@ -12,7 +12,7 @@ from .types import SessionInfo, Message, Ad
 load_dotenv()
 
 
-DEFAULT_CONTEXT_TEMPLATE = ""
+DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description} - {link}"
 AD_FETCH_URL = "https://adcortex.3102labs.com/ads/match"
 
 # Configure logging
@@ -42,7 +42,7 @@ class AdcortexChatClient:
         self.messages: List[Message] = []  # Initialize messages
         self.num_messages_before_ad = num_messages_before_ad
         self.num_messages_between_ads = num_messages_between_ads
-        self.last_ad_seen: Optional[Ad] = None
+        self.latest_ad: Optional[Ad] = None
         self.shown_ads: List[Dict[str, Any]] = []  # Store shown ads and their message counts
 
     def __call__(self, role: str, content: str) -> Optional[Dict[str, Any]]:
@@ -92,14 +92,14 @@ class AdcortexChatClient:
         """Handle the response from the ad request."""
         ads = response_data.get("ads", [])
         if ads:
-            self.last_ad_seen = Ad(**ads[0])  # Store the last ad seen
+            self.latest_ad = Ad(**ads[0])  # Store the last ad seen
             # Store the ad and the current message count
             self.shown_ads.append({
-                "ad": self.last_ad_seen,
+                "ad": self.latest_ad,
                 "message_count": len(self.messages)
             })
-            # logger.info(f"Ad fetched: {self.last_ad_seen.ad_title}")
-            return self.last_ad_seen
+            # logger.info(f"Ad fetched: {self.latest_ad.ad_title}")
+            return self.latest_ad
         # logger.info("No ads returned.")
         return {}
 
@@ -112,3 +112,9 @@ class AdcortexChatClient:
         messages_since_last_ad = len(self.messages) - last_shown_ad["message_count"]
         
         return messages_since_last_ad >= self.num_messages_between_ads 
+    
+    # def create_context(self) -> str:
+    #     """Create a context string for the last seen ad."""
+    #     if self.latest_ad:
+    #         return self.context_template.format(**asdict(self.latest_ad))
+    #     return ""
