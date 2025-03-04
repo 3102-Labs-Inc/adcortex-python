@@ -25,7 +25,7 @@ class AdcortexClient:
         self.session_info = session_info
         self.context_template = context_template
         self.api_key = api_key or os.getenv("ADCORTEX_API_KEY")
-        self.base_url = "https://adcortex.3102labs.com/ads/match"
+        self.base_url = "http://13.127.77.48:8000/ads/match"
 
         if not self.api_key:
             raise ValueError("ADCORTEX_API_KEY is not set and not provided")

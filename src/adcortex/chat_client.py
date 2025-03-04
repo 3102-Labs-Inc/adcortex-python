@@ -13,7 +13,7 @@ load_dotenv()
 
 
 DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description} - {link}"
-AD_FETCH_URL = "https://adcortex.3102labs.com/ads/match"
+AD_FETCH_URL = "http://13.127.77.48:8000/ads/match"
 
 # Configure logging
 # logging.basicConfig(level=logging.ERROR)
@@ -113,8 +113,8 @@ class AdcortexChatClient:
         
         return messages_since_last_ad >= self.num_messages_between_ads 
     
-    # def create_context(self) -> str:
-    #     """Create a context string for the last seen ad."""
-    #     if self.latest_ad:
-    #         return self.context_template.format(**asdict(self.latest_ad))
-    #     return ""
+    def create_context(self) -> str:
+        """Create a context string for the last seen ad."""
+        if self.latest_ad:
+            return self.context_template.format(**asdict(self.latest_ad))
+        return ""
