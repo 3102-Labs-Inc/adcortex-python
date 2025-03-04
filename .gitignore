@@ -1,9 +1,31 @@
-build/
+# Environment Variables
+.env
+
+# Build Artifacts
 dist/
+build/
+*.egg-info/
+*.whl
+*.tar.gz
+*.zip
+
+# Python Cache Files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and Editor Specific Files
+.vscode/
+.idea/
+*.swp
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Caches
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
 .DS_Store
-*.egg-info/
-*.pyc
-.env
+
