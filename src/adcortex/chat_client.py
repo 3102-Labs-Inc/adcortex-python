@@ -4,7 +4,7 @@ import logging
 from typing import Optional, List, Dict, Any
 import requests
 from dataclasses import asdict
-from src.adcortex.types import SessionInfo, Message, Ad
+from .types import SessionInfo, Message, Ad
 
 
 DEFAULT_CONTEXT_TEMPLATE = ""

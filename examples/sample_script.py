@@ -1,7 +1,7 @@
 import time
 import json
-from src.adcortex.client import AdcortexClient
-from src.adcortex.types import SessionInfo, UserInfo, Platform, Message
+from adcortex.client import AdcortexClient
+from adcortex.types import SessionInfo, UserInfo, Platform, Message
 
 # Initialize the client
 session_info = SessionInfo(

@@ -5,7 +5,7 @@ import requests
 from dataclasses import asdict
 from dotenv import load_dotenv
 
-from src.adcortex.types import SessionInfo, Message, Ad
+from .types import SessionInfo, Message, Ad
 
 # Load environment variables from .env file
 load_dotenv()
