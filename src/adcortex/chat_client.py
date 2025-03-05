@@ -13,7 +13,7 @@ load_dotenv()
 
 
 DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description} - {link}"
-AD_FETCH_URL = "http://13.127.77.48:8000/ads/match"
+AD_FETCH_URL = "https://adcortex.3102labs.com/ads/match"
 
 # Configure logging
 # logging.basicConfig(level=logging.ERROR)
