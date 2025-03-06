@@ -1,23 +1,55 @@
 """Types for ADCortex API.
 
-This module defines data classes used by the ADCortex API client.
+This module defines data classes and enumerations used by the ADCortex API client.
 """
 
-from pydantic import BaseModel, constr, validator
+from pydantic import BaseModel, validator
 from typing import List, Dict, Any
 from enum import Enum
 import pycountry
 
+
 class Gender(str, Enum):
+    """
+    Gender enumeration.
+
+    Attributes:
+        male: Represents the male gender.
+        female: Represents the female gender.
+        other: Represents any gender not covered by male or female.
+    """
     male = "male"
     female = "female"
     other = "other"
 
+
 class Role(str, Enum):
+    """
+    Role enumeration.
+
+    Attributes:
+        user: Indicates that the message sender is a user.
+        ai: Indicates that the message sender is an AI.
+    """
     user = "user"
     ai = "ai"
 
+
 class Interest(str, Enum):
+    """
+    Interest enumeration.
+
+    Attributes:
+        flirting: Indicates an interest in flirting.
+        gaming: Indicates an interest in gaming.
+        sports: Indicates an interest in sports.
+        music: Indicates an interest in music.
+        travel: Indicates an interest in travel.
+        technology: Indicates an interest in technology.
+        art: Indicates an interest in art.
+        cooking: Indicates an interest in cooking.
+        all: Represents all interests.
+    """
     flirting = "flirting"
     gaming = "gaming"
     sports = "sports"
@@ -27,6 +59,7 @@ class Interest(str, Enum):
     art = "art"
     cooking = "cooking"
     all = "all"  # Option for all interests
+
 
 class UserInfo(BaseModel):
     """
@@ -43,21 +76,28 @@ class UserInfo(BaseModel):
     user_id: str
     age: int
     gender: Gender
-    location: str  # Store as ISO code
+    location: str  # Stored as ISO code.
     language: str
-    interests: List[Interest]  # Use Interest enum
+    interests: List[Interest]
 
     @validator('location')
     def validate_country(cls, value):
+        """
+        Validate that the provided country code is a valid ISO 3166-1 alpha-2 code.
+        """
         if value not in [country.alpha_2 for country in pycountry.countries]:
             raise ValueError(f"{value} is not a valid country code.")
         return value
 
     @validator('language')
     def validate_language(cls, value):
+        """
+        Validate that the provided language code is a valid ISO 639-1 code.
+        """
         if value not in [lang.alpha_2 for lang in pycountry.languages]:
             raise ValueError(f"{value} is not a valid language code.")
         return value
+
 
 class Platform(BaseModel):
     """
@@ -69,6 +109,7 @@ class Platform(BaseModel):
     """
     name: str
     version: str
+
 
 class SessionInfo(BaseModel):
     """
@@ -83,27 +124,29 @@ class SessionInfo(BaseModel):
     """
     session_id: str
     character_name: str
-    character_metadata: Dict[str, Any] = {"description": ""}  # Initialize with empty string
+    character_metadata: Dict[str, Any] = {"description": ""}
     user_info: UserInfo
     platform: Platform
+
 
 class Message(BaseModel):
     """
     Represents a single message in a conversation.
 
     Attributes:
-        role (Role): The role of the message sender (e.g., 'user', 'ai').
+        role (Role): The role of the message sender (either user or AI).
         content (str): The content of the message.
     """
     role: Role
     content: str
+
 
 class Ad(BaseModel):
     """
     Represents an advertisement fetched via the ADCortex API.
 
     Attributes:
-        idx (int): Identifier for the ad.
+        idx (int): Identifier for the advertisement.
         ad_title (str): Title of the advertisement.
         ad_description (str): Description of the advertisement.
         placement_template (str): Template used for ad placement.
