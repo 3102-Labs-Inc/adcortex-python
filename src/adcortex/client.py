@@ -2,7 +2,6 @@
 import os
 from typing import Optional, List
 import requests
-from dataclasses import asdict
 from dotenv import load_dotenv
 
 from .types import SessionInfo, Message, Ad
@@ -38,10 +37,10 @@ class AdcortexClient:
     def _generate_payload(self, messages: List[Message]) -> dict:
         payload = {
             "RGUID": self.session_info.session_id,
-            "session_info": asdict(self.session_info),
-            "user_data": asdict(self.session_info.user_info),
-            "messages": [asdict(message) for message in messages],
-            "platform": asdict(self.session_info.platform),
+            "session_info": self.session_info.model_dump(),
+            "user_data": self.session_info.user_info.model_dump(),
+            "messages": [message.model_dump() for message in messages],
+            "platform": self.session_info.platform.model_dump(),
         }
         return payload
     

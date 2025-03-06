@@ -69,12 +69,13 @@ class AdcortexChatClient:
 
     def _prepare_payload(self) -> Dict[str, Any]:
         """Prepare the payload for the ad request."""
+
         payload = {
             "RGUID": self.session_info.session_id,
-            "session_info": asdict(self.session_info),
-            "user_data": asdict(self.session_info.user_info),
-            "messages": [asdict(message) for message in self.messages[-self.num_messages_before_ad:]],
-            "platform": asdict(self.session_info.platform),
+            "session_info": self.session_info.model_dump(),
+            "user_data": self.session_info.user_info.model_dump(),
+            "messages": [message.model_dump() for message in self.messages[-self.num_messages_before_ad:]],
+            "platform": self.session_info.platform.model_dump(),
         }
         return payload
 
@@ -116,5 +117,5 @@ class AdcortexChatClient:
     def create_context(self) -> str:
         """Create a context string for the last seen ad."""
         if self.latest_ad:
-            return self.context_template.format(**asdict(self.latest_ad))
+            return self.context_template.format(**self.latest_ad.model_dump())
         return ""

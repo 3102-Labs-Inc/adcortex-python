@@ -1,3 +1,8 @@
+# import sys
+# import os
+
+# sys.path.append("../src")
+
 from adcortex.chat_client import AdcortexChatClient
 from adcortex.types import SessionInfo, UserInfo, Platform, Message
 
@@ -11,8 +16,7 @@ session_info = SessionInfo(
         age=20,
         gender="male",
         location="US",
-        language="en",
-        interests=["flirting", "gaming"]
+        interests=["all"]
     ),
     platform=Platform(
         name="ChatBotX",

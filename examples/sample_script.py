@@ -1,5 +1,12 @@
+# import sys
+# import os
+
+# sys.path.append("../src")
+
 import time
 import json
+
+
 from adcortex.client import AdcortexClient
 from adcortex.types import SessionInfo, UserInfo, Platform, Message
 
@@ -13,8 +20,7 @@ session_info = SessionInfo(
         age=20,
         gender="male",
         location="US",
-        language="en",
-        interests=["flirting", "gaming"]
+        interests=["all"]
     ),
     platform=Platform(
         name="ChatBotX",

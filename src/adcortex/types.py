@@ -70,14 +70,14 @@ class UserInfo(BaseModel):
         age (int): User's age.
         gender (Gender): User's gender.
         location (str): User's location (ISO 3166-1 alpha-2 code).
-        language (str): Preferred language (ISO 639-1 code).
+        language (str): Preferred language (must be "english").
         interests (List[Interest]): A list of user's interests.
     """
     user_id: str
     age: int
     gender: Gender
     location: str  # Stored as ISO code.
-    language: str
+    language: str = "en"  # Default to "english"
     interests: List[Interest]
 
     @validator('location')
@@ -92,10 +92,10 @@ class UserInfo(BaseModel):
     @validator('language')
     def validate_language(cls, value):
         """
-        Validate that the provided language code is a valid ISO 639-1 code.
+        Validate that the provided language code is "english".
         """
-        if value not in [lang.alpha_2 for lang in pycountry.languages]:
-            raise ValueError(f"{value} is not a valid language code.")
+        if value.lower() != "en":
+            raise ValueError("Language must be 'english'.")
         return value
 
 

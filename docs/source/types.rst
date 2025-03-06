@@ -70,13 +70,13 @@ UserInfo
    - **age (int)**: User's age.
    - **gender (Gender)**: User's gender.
    - **location (str)**: User's location (ISO 3166-1 alpha-2 code).
-   - **language (str)**: Preferred language (ISO 639-1 code).
+   - **language (str)**: Preferred language (must be "english", default is "en").
    - **interests (List[Interest])**: A list of user's interests.
 
    **Validators:**
    
    - **validate_country(value)**: Validates that ``location`` is a valid ISO 3166-1 alpha-2 country code.
-   - **validate_language(value)**: Validates that ``language`` is a valid ISO 639-1 language code.
+   - **validate_language(value)**: Validates that ``language`` is "english" (default is "en").
 
 Platform
 ~~~~~~~~
