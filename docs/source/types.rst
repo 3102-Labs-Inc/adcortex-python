@@ -1,17 +1,57 @@
 Data Types
 ==========
 
-The ADCortex Chat Client library uses several data classes and enumerated types defined in the
-``adcortex.types`` module. This section provides an overview of these classes, their attributes, and the
-possible values for the enumerations.
+This document describes the types defined in the ``adcortex.types`` module used by the ADCortex API client.
 
-Module Documentation
---------------------
+Enums
+-----
 
-.. automodule:: adcortex.types
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Gender
+~~~~~~
+
+.. py:class:: Gender(str, Enum)
+   :noindex:
+
+   **Enumeration of possible gender values.**
+
+   **Members:**
+   
+   - **male**: Represents the male gender.
+   - **female**: Represents the female gender.
+   - **other**: Represents any gender not covered by male or female.
+
+Role
+~~~~
+
+.. py:class:: Role(str, Enum)
+   :noindex:
+
+   **Enumeration of possible roles for message senders.**
+
+   **Members:**
+   
+   - **user**: Indicates that the message sender is a user.
+   - **ai**: Indicates that the message sender is an AI.
+
+Interest
+~~~~~~~~
+
+.. py:class:: Interest(str, Enum)
+   :noindex:
+
+   **Enumeration of user interests.**
+
+   **Members:**
+   
+   - **flirting**: Indicates an interest in flirting.
+   - **gaming**: Indicates an interest in gaming.
+   - **sports**: Indicates an interest in sports.
+   - **music**: Indicates an interest in music.
+   - **travel**: Indicates an interest in travel.
+   - **technology**: Indicates an interest in technology.
+   - **art**: Indicates an interest in art.
+   - **cooking**: Indicates an interest in cooking.
+   - **all**: Represents all interests.
 
 Classes
 -------
@@ -19,96 +59,79 @@ Classes
 UserInfo
 ~~~~~~~~
 
-.. autoclass:: adcortex.types.UserInfo
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. py:class:: UserInfo(BaseModel)
+   :noindex:
+
+   **Stores user information for ADCortex API.**
 
    **Attributes:**
-   - **user_id (str):** Unique identifier for the user.
-   - **age (int):** User's age.
-   - **gender (Gender):** User's gender.
-   - **location (str):** ISO 3166-1 alpha-2 code representing the user's location.
-   - **language (str):** ISO 639-1 code for the user's preferred language.
-   - **interests (List[Interest]):** List of the user's interests.
+   
+   - **user_id (str)**: Unique identifier for the user.
+   - **age (int)**: User's age.
+   - **gender (Gender)**: User's gender.
+   - **location (str)**: User's location (ISO 3166-1 alpha-2 code).
+   - **language (str)**: Preferred language (ISO 639-1 code).
+   - **interests (List[Interest])**: A list of user's interests.
+
+   **Validators:**
+   
+   - **validate_country(value)**: Validates that ``location`` is a valid ISO 3166-1 alpha-2 country code.
+   - **validate_language(value)**: Validates that ``language`` is a valid ISO 639-1 language code.
 
 Platform
 ~~~~~~~~
 
-.. autoclass:: adcortex.types.Platform
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. py:class:: Platform(BaseModel)
+   :noindex:
+
+   **Contains platform-related metadata.**
 
    **Attributes:**
-   - **name (str):** Name of the platform.
-   - **version (str):** Version of the platform.
+   
+   - **name (str)**: Name of the platform.
+   - **version (str)**: Version of the platform.
 
 SessionInfo
 ~~~~~~~~~~~
 
-.. autoclass:: adcortex.types.SessionInfo
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. py:class:: SessionInfo(BaseModel)
+   :noindex:
+
+   **Stores session details including user and platform information.**
 
    **Attributes:**
-   - **session_id (str):** Unique identifier for the session.
-   - **character_name (str):** Name of the character (assistant).
-   - **character_metadata (Dict[str, Any]):** Additional metadata for the character.
-   - **user_info (UserInfo):** User information.
-   - **platform (Platform):** Platform details.
+   
+   - **session_id (str)**: Unique identifier for the session.
+   - **character_name (str)**: Name of the character (assistant).
+   - **character_metadata (Dict[str, Any])**: Additional metadata for the character.
+   - **user_info (UserInfo)**: User information.
+   - **platform (Platform)**: Platform details.
 
 Message
 ~~~~~~~
 
-.. autoclass:: adcortex.types.Message
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. py:class:: Message(BaseModel)
+   :noindex:
+
+   **Represents a single message in a conversation.**
 
    **Attributes:**
-   - **role (Role):** The role of the message sender (either `user` or `ai`).
-   - **content (str):** The content of the message.
+   
+   - **role (Role)**: The role of the message sender.
+   - **content (str)**: The content of the message.
 
 Ad
 ~~
 
-.. autoclass:: adcortex.types.Ad
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. py:class:: Ad(BaseModel)
+   :noindex:
+
+   **Represents an advertisement fetched via the ADCortex API.**
 
    **Attributes:**
-   - **idx (int):** Identifier for the advertisement.
-   - **ad_title (str):** Title of the advertisement.
-   - **ad_description (str):** Description of the advertisement.
-   - **placement_template (str):** Template used for ad placement.
-   - **link (str):** URL link to the advertised product or service.
-
-Enumerations
-============
-
-Gender
-~~~~~~
-
-.. autoclass:: adcortex.types.Gender
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Role
-~~~~
-
-.. autoclass:: adcortex.types.Role
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Interest
-~~~~~~~~
-
-.. autoclass:: adcortex.types.Interest
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   
+   - **idx (int)**: Identifier for the advertisement.
+   - **ad_title (str)**: Title of the advertisement.
+   - **ad_description (str)**: Description of the advertisement.
+   - **placement_template (str)**: Template used for ad placement.
+   - **link (str)**: URL link to the advertised product or service.
