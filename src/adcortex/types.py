@@ -3,32 +3,63 @@
 This module defines data classes used by the ADCortex API client.
 """
 
-from dataclasses import dataclass
+from pydantic import BaseModel, constr, validator
 from typing import List, Dict, Any
+from enum import Enum
+import pycountry
 
-@dataclass
-class UserInfo:
+class Gender(str, Enum):
+    male = "male"
+    female = "female"
+    other = "other"
+
+class Role(str, Enum):
+    user = "user"
+    ai = "ai"
+
+class Interest(str, Enum):
+    flirting = "flirting"
+    gaming = "gaming"
+    sports = "sports"
+    music = "music"
+    travel = "travel"
+    technology = "technology"
+    art = "art"
+    cooking = "cooking"
+    all = "all"  # Option for all interests
+
+class UserInfo(BaseModel):
     """
     Stores user information for ADCortex API.
 
     Attributes:
         user_id (str): Unique identifier for the user.
         age (int): User's age.
-        gender (str): User's gender.
-        location (str): User's location.
-        language (str): Preferred language.
-        interests (List[str]): A list of user's interests.
+        gender (Gender): User's gender.
+        location (str): User's location (ISO 3166-1 alpha-2 code).
+        language (str): Preferred language (ISO 639-1 code).
+        interests (List[Interest]): A list of user's interests.
     """
     user_id: str
     age: int
-    gender: str
-    location: str
+    gender: Gender
+    location: str  # Store as ISO code
     language: str
-    interests: List[str]
+    interests: List[Interest]  # Use Interest enum
 
+    @validator('location')
+    def validate_country(cls, value):
+        if value not in [country.alpha_2 for country in pycountry.countries]:
+            raise ValueError(f"{value} is not a valid country code.")
+        return value
 
-@dataclass
-class Platform:
+    @validator('language')
+    def validate_language(cls, value):
+        if value not in [lang.alpha_2 for lang in pycountry.languages]:
+            raise ValueError(f"{value} is not a valid language code.")
+        return value
+
+class Platform(BaseModel):
     """
     Contains platform-related metadata.
 
@@ -39,9 +70,7 @@ class Platform:
     name: str
     version: str
 
-
-@dataclass
-class SessionInfo:
+class SessionInfo(BaseModel):
     """
     Stores session details including user and platform information.
 
@@ -54,26 +83,22 @@ class SessionInfo:
     """
     session_id: str
     character_name: str
-    character_metadata: Dict[str, Any]
+    character_metadata: Dict[str, Any] = {"description": ""}  # Initialize with empty string
     user_info: UserInfo
     platform: Platform
 
-
-@dataclass
-class Message:
+class Message(BaseModel):
     """
     Represents a single message in a conversation.
 
     Attributes:
-        role (str): The role of the message sender (e.g., 'user', 'ai').
+        role (Role): The role of the message sender (e.g., 'user', 'ai').
         content (str): The content of the message.
     """
-    role: str
+    role: Role
     content: str
 
-
-@dataclass
-class Ad:
+class Ad(BaseModel):
     """
     Represents an advertisement fetched via the ADCortex API.
 
