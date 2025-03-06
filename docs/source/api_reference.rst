@@ -8,8 +8,9 @@ This section describes the main classes and methods of the ADCortex Chat Client 
    :nosignatures:
 
    adcortex.chat_client.AdcortexChatClient
+   adcortex.client.AdcortexClient
 
-Detailed documentation for the ADCortexChatClient is provided below.
+Detailed documentation for the ADCortexChatClient and AdcortexClient is provided below.
 
 ADCortexChatClient
 ------------------
@@ -56,3 +57,33 @@ The :class:`adcortex.chat_client.AdcortexChatClient` is the primary interface fo
 
 - ``create_context() -> str``  
   Generates a context string using the latest fetched ad.
+
+AdcortexClient
+------------------
+
+The :class:`adcortex.client.AdcortexClient` is used for fetching ads based on user messages without the chat context.
+
+**Constructor:**
+
+.. code-block:: python
+
+    AdcortexClient(
+        session_info: SessionInfo,
+        context_template: Optional[str] = DEFAULT_CONTEXT_TEMPLATE,
+        api_key: Optional[str] = None,
+    )
+
+- **session_info**: Instance of :class:`adcortex.types.SessionInfo` with session, character, user, and platform details.
+- **context_template**: A template string to format ad context. Default is an empty string.
+- **api_key**: ADCORTEX API key. If not provided, it is loaded from the environment variable.
+
+**Key Methods:**
+
+- ``_generate_payload(messages: List[Message]) -> dict``  
+  Prepares the payload for the ad request based on the provided messages.
+
+- ``fetch_ad(messages: List[Message]) -> Ad``  
+  Sends a request to fetch an ad based on the provided messages and returns an instance of :class:`adcortex.types.Ad`.
+
+- ``generate_context(ad: Ad) -> str``  
+  Generates a context string for the provided ad using the context template.

@@ -8,7 +8,7 @@ from adcortex.types import SessionInfo, UserInfo, Platform, Message
 
 # Initialize the chat client
 session_info = SessionInfo(
-    session_id="43253425",
+    session_id="fads-fda",
     character_name="Alex",
     character_metadata={"description": "Friendly and humorous assistant"},
     user_info=UserInfo(
