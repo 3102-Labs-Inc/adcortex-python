@@ -1,7 +1,3 @@
-# Configuration file for the Sphinx documentation builder.
-# For the full list of built-in configuration values, see:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
-
 import os
 import sys
 
@@ -10,17 +6,22 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # --- Extract project metadata from pyproject.toml ---
 
-# Attempt to import tomllib (Python 3.11+) and fall back to the toml package if needed.
+# Try to import tomllib (Python 3.11+) and set the appropriate open mode.
 try:
     import tomllib  # Available in Python 3.11+
+    open_mode = "rb"
 except ImportError:
-    import toml as tomllib  # For older Python versions: install with `pip install toml`
+    import toml as tomllib  # Fallback for older Python versions: install with `pip install toml`
+    open_mode = "r"
 
-# Determine the absolute path to the pyproject.toml file (assumed to be in the project root)
 pyproject_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../pyproject.toml'))
 
-with open(pyproject_path, "rb") as f:
-    pyproject_data = tomllib.load(f)
+if open_mode == "rb":
+    with open(pyproject_path, open_mode) as f:
+        pyproject_data = tomllib.load(f)
+else:
+    with open(pyproject_path, open_mode, encoding="utf-8") as f:
+        pyproject_data = tomllib.load(f)
 
 # Extract project metadata according to PEP 621
 project_info = pyproject_data.get("project", {})
@@ -35,8 +36,6 @@ copyright = '2025, 3102labs'
 # --- End of metadata extraction ---
 
 # -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
-
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
@@ -53,10 +52,5 @@ autodoc_default_options = {
 }
 
 # -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
-
 html_theme = 'alabaster'
 html_static_path = ['_static']
-
-
-
