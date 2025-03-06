@@ -26,7 +26,7 @@ else:
 # Extract project metadata according to PEP 621
 project_info = pyproject_data.get("project", {})
 
-project = project_info.get("name", "adcortex-python")
+project = project_info.get("name", "adcortex")
 release = project_info.get("version", "0.0.0")
 
 # Extract author information: expecting a list of authors, each being a table with a 'name' key.
