@@ -1,4 +1,5 @@
 """Client for ADCortex API"""
+
 import os
 from typing import Optional, List
 import requests
@@ -14,6 +15,7 @@ DEFAULT_CONTEXT_TEMPLATE = """
 
 """
 
+
 class AdcortexClient:
     def __init__(
         self,
@@ -28,7 +30,7 @@ class AdcortexClient:
 
         if not self.api_key:
             raise ValueError("ADCORTEX_API_KEY is not set and not provided")
-        
+
         self.headers = {
             "Content-Type": "application/json",
             "X-API-KEY": self.api_key,
@@ -43,18 +45,20 @@ class AdcortexClient:
             "platform": self.session_info.platform.model_dump(),
         }
         return payload
-    
+
     # NOTE: @Rahul review this for functionality
-    def fetch_ad(self, messages: List[Message]) -> Ad:
+    def fetch_ad(self, messages: List[Message]) -> Optional[Ad]:
         payload = self._generate_payload(messages)
         response = requests.post(self.base_url, headers=self.headers, json=payload)
         response.raise_for_status()
-        
-        # Extract the ad from the response
-        ad_data = response.json().get('ads', [{}])[0]  # Get the first ad or an empty dict if not found
-        return Ad(**ad_data)  # Unpack the ad data into the Ad constructor
 
-    # NOTE: @Rahul review this for functionality
+        # Extract the ad from the response
+        ads = response.json().get("ads", [])
+        if not ads:
+            return None  # Return None if no ads are found
+
+        return Ad(**ads[0])  # Unpack the ad data into the Ad constructor
+
     def generate_context(self, ad: Ad) -> str:
         return self.context_template.format(
             ad_title=ad.ad_title,

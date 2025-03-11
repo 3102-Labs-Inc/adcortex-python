@@ -1,5 +1,7 @@
 """Chat Client for ADCortex API"""
+
 import os
+
 # import logging
 from typing import Optional, List, Dict, Any
 import requests
@@ -12,12 +14,15 @@ from .types import SessionInfo, Message, Ad
 load_dotenv()
 
 
-DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description} - {link}"
+DEFAULT_CONTEXT_TEMPLATE = (
+    "Here is a product the user might like: {ad_title} - {ad_description} - {link}"
+)
 AD_FETCH_URL = "https://adcortex.3102labs.com/ads/match"
 
 # Configure logging
 # logging.basicConfig(level=logging.ERROR)
 # logger = logging.getLogger(__name__)
+
 
 class AdcortexChatClient:
     def __init__(
@@ -43,7 +48,9 @@ class AdcortexChatClient:
         self.num_messages_before_ad = num_messages_before_ad
         self.num_messages_between_ads = num_messages_between_ads
         self.latest_ad: Optional[Ad] = None
-        self.shown_ads: List[Dict[str, Any]] = []  # Store shown ads and their message counts
+        self.shown_ads: List[Dict[str, Any]] = (
+            []
+        )  # Store shown ads and their message counts
 
     def __call__(self, role: str, content: str) -> Optional[Dict[str, Any]]:
         """Add a message and fetch an ad if applicable."""
@@ -74,7 +81,10 @@ class AdcortexChatClient:
             "RGUID": self.session_info.session_id,
             "session_info": self.session_info.model_dump(),
             "user_data": self.session_info.user_info.model_dump(),
-            "messages": [message.model_dump() for message in self.messages[-self.num_messages_before_ad:]],
+            "messages": [
+                message.model_dump()
+                for message in self.messages[-self.num_messages_before_ad :]
+            ],
             "platform": self.session_info.platform.model_dump(),
         }
         return payload
@@ -89,16 +99,17 @@ class AdcortexChatClient:
             # logger.error(f"Error fetching ad: {e}")
             return None
 
-    def _handle_response(self, response_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _handle_response(
+        self, response_data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """Handle the response from the ad request."""
         ads = response_data.get("ads", [])
         if ads:
             self.latest_ad = Ad(**ads[0])  # Store the last ad seen
             # Store the ad and the current message count
-            self.shown_ads.append({
-                "ad": self.latest_ad,
-                "message_count": len(self.messages)
-            })
+            self.shown_ads.append(
+                {"ad": self.latest_ad, "message_count": len(self.messages)}
+            )
             # logger.info(f"Ad fetched: {self.latest_ad.ad_title}")
             return self.latest_ad
         # logger.info("No ads returned.")
@@ -108,12 +119,12 @@ class AdcortexChatClient:
         """Determine if an ad should be shown based on message count."""
         if not self.shown_ads:
             return len(self.messages) >= self.num_messages_before_ad
-        
+
         last_shown_ad = self.shown_ads[-1]
         messages_since_last_ad = len(self.messages) - last_shown_ad["message_count"]
-        
-        return messages_since_last_ad >= self.num_messages_between_ads 
-    
+
+        return messages_since_last_ad >= self.num_messages_between_ads
+
     def create_context(self) -> str:
         """Create a context string for the last seen ad."""
         if self.latest_ad:

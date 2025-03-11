@@ -18,6 +18,7 @@ class Gender(str, Enum):
         female: Represents the female gender.
         other: Represents any gender not covered by male or female.
     """
+
     male = "male"
     female = "female"
     other = "other"
@@ -31,6 +32,7 @@ class Role(str, Enum):
         user: Indicates that the message sender is a user.
         ai: Indicates that the message sender is an AI.
     """
+
     user = "user"
     ai = "ai"
 
@@ -50,6 +52,7 @@ class Interest(str, Enum):
         cooking: Indicates an interest in cooking.
         all: Represents all interests.
     """
+
     flirting = "flirting"
     gaming = "gaming"
     sports = "sports"
@@ -73,6 +76,7 @@ class UserInfo(BaseModel):
         language (str): Preferred language (must be "english").
         interests (List[Interest]): A list of user's interests.
     """
+
     user_id: str
     age: int
     gender: Gender
@@ -80,7 +84,7 @@ class UserInfo(BaseModel):
     language: str = "en"  # Default to "english"
     interests: List[Interest]
 
-    @validator('location')
+    @validator("location")
     def validate_country(cls, value):
         """
         Validate that the provided country code is a valid ISO 3166-1 alpha-2 code.
@@ -89,7 +93,7 @@ class UserInfo(BaseModel):
             raise ValueError(f"{value} is not a valid country code.")
         return value
 
-    @validator('language')
+    @validator("language")
     def validate_language(cls, value):
         """
         Validate that the provided language code is "english".
@@ -107,6 +111,7 @@ class Platform(BaseModel):
         name (str): Name of the platform.
         version (str): Version of the platform.
     """
+
     name: str
     version: str
 
@@ -122,6 +127,7 @@ class SessionInfo(BaseModel):
         user_info (UserInfo): User information.
         platform (Platform): Platform details.
     """
+
     session_id: str
     character_name: str
     character_metadata: Dict[str, Any] = {"description": ""}
@@ -137,6 +143,7 @@ class Message(BaseModel):
         role (Role): The role of the message sender (either user or AI).
         content (str): The content of the message.
     """
+
     role: Role
     content: str
 
@@ -152,6 +159,7 @@ class Ad(BaseModel):
         placement_template (str): Template used for ad placement.
         link (str): URL link to the advertised product or service.
     """
+
     idx: int
     ad_title: str
     ad_description: str
