@@ -1,10 +1,10 @@
-"""Chat Client for ADCortex API"""
+"""Chat Client V2 for ADCortex API with sequential message processing"""
 
-import os
-import uuid  # Import the uuid module
+import asyncio
 from datetime import datetime, timezone
 import logging
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 import httpx
 from dotenv import load_dotenv
@@ -15,15 +15,13 @@ from .types import Ad, AdResponse, Message, Role, SessionInfo
 # Load environment variables from .env file
 load_dotenv()
 
-
 DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description}: here is a sample way to present it: {placement_template}"
 AD_FETCH_URL = "https://adcortex.3102labs.com/ads/matchv2"
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-
-class AdcortexChatClient:
+class AdcortexChatClientV2:
     def __init__(
         self,
         session_info: SessionInfo,
@@ -43,6 +41,11 @@ class AdcortexChatClient:
         self._timeout = timeout
         self.latest_ad = None
         self._disable_logging = disable_logging
+        
+        # Message processing queue
+        self._message_queue: List[Message] = []
+        self._is_processing = False
+        self._processing_task = None
 
         # Configure logging
         if not disable_logging:
@@ -66,69 +69,87 @@ class AdcortexChatClient:
         if not self._disable_logging:
             logger.error(message)
 
-    def __call__(self, role: Role, content: str) -> Optional[Dict[str, Any]]:
-        """Add a message and fetch an ad if applicable."""
+    async def __call__(self, role: Role, content: str) -> None:
+        """Add a message to the queue and process it."""
         current_message = Message(
-            role=role, content=content, timestamp=datetime.now(timezone.utc).timestamp()
+            role=role,
+            content=content,
+            timestamp=datetime.now(timezone.utc).timestamp()
         )
-        self._log_info(f"Message added: {role} - {content}")
+        self._message_queue.append(current_message)
+        self._log_info(f"Message queued: {role} - {content}")
 
-        return self._fetch_ad(current_message)
+        if not self._is_processing:
+            self._is_processing = True
+            self._processing_task = asyncio.create_task(self._process_queue())
+            await self._processing_task
+            return
+        
+        # If already processing, wait for the current task to complete
+        if self._processing_task and not self._processing_task.done():
+            await self._processing_task
+        
+        # Create a new task for the remaining messages
+        self._processing_task = asyncio.create_task(self._process_queue())
+        await self._processing_task
 
-    def _fetch_ad(self, current_message: Message) -> Optional[Dict[str, Any]]:
-        """Fetch an ad based on the current messages."""
+    async def _process_queue(self) -> None:
+        """Process messages in the queue one at a time."""
+        try:
+            while self._message_queue:
+                message = self._message_queue[0]
+                self._log_info(f"Processing message: {message.content}")
+                
+                try:
+                    await self._fetch_ad(message)
+                    self._message_queue.pop(0)
+                except Exception as e:
+                    self._log_error(f"Error processing message: {e}")
+                    self._message_queue.pop(0)
+        finally:
+            self._is_processing = False
 
+    async def _fetch_ad(self, current_message: Message) -> None:
+        """Fetch an ad based on the current message asynchronously."""
         payload = self._prepare_payload(current_message)
-        response_data = self._send_request(payload)
-
-        if response_data:
-            return self._handle_response(response_data)
-        return None
+        await self._send_request(payload)
 
     def _prepare_payload(self, current_message: Message) -> Dict[str, Any]:
         """Prepare the payload for the ad request."""
-
-        payload = {
-            "RGUID": str(uuid.uuid4()),
+        return {
+            "RGUID": str(uuid4()),
             "session_info": self._session_info.model_dump(),
             "user_data": self._session_info.user_info.model_dump(),
             "messages": [current_message.model_dump()],
         }
-        return payload
 
-    def _send_request(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Send the request to the ADCortex API and return the response."""
+    async def _send_request(self, payload: Dict[str, Any]) -> None:
+        """Send the request to the ADCortex API asynchronously."""
         try:
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.post(
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
                     AD_FETCH_URL,
                     headers=self._headers,
                     json=payload
                 )
                 response.raise_for_status()
-                return response.json()
+                await self._handle_response(response.json())
         except httpx.TimeoutException:
             self._log_error("Request timed out")
-            return None
         except httpx.RequestError as e:
             self._log_error(f"Error fetching ad: {e}")
-            return None
 
-    def _handle_response(
-        self, response_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    async def _handle_response(self, response_data: Dict[str, Any]) -> None:
         """Handle the response from the ad request."""
         try:
             parsed_response = AdResponse(**response_data)
             if parsed_response.ads:
                 self.latest_ad = parsed_response.ads[0]
                 self._log_info(f"Ad fetched: {self.latest_ad.ad_title}")
-                return self.latest_ad
-            self._log_info("No ads returned")
-            return {}
+            else:
+                self._log_info("No ads returned")
         except ValidationError as e:
             self._log_error(f"Invalid ad response format: {e}")
-            return {}
 
     def create_context(self) -> str:
         """Create a context string for the last seen ad."""
@@ -138,4 +159,4 @@ class AdcortexChatClient:
 
     def get_latest_ad(self) -> Optional[Ad]:
         """Get the latest ad."""
-        return self.latest_ad
+        return self.latest_ad 

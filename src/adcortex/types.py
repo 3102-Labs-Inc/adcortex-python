@@ -4,10 +4,10 @@ This module defines data classes and enumerations used by the ADCortex API clien
 """
 
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import pycountry
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 
 
 class Platform(BaseModel):
@@ -138,7 +138,7 @@ class UserInfo(BaseModel):
         gender (str): User's gender (must be one of the Gender enum values).
         location (str): User's location (ISO 3166-1 alpha-2 code).
         language (str): Preferred language (must be "english").
-        interests (str): A comma-separated string of user's interests.
+        interests (List[Interest]): List of user's interests.
     """
 
     user_id: str
@@ -146,7 +146,7 @@ class UserInfo(BaseModel):
     gender: str
     location: str
     language: str
-    interests: str
+    interests: List[Interest]
 
     @field_validator("age")
     def validate_age(cls, value):
@@ -182,13 +182,12 @@ class UserInfo(BaseModel):
     @field_validator("interests")
     def validate_interests(cls, value):
         """
-        Validate that the provided interests string can be converted to a list of valid Interest enum values.
+        Validate that the provided interests list contains valid Interest enum values.
         """
-        interests_list = [interest.strip() for interest in value.split(",")]
-        for interest in interests_list:
-            if interest not in Interest.__members__:
+        for interest in value:
+            if not isinstance(interest, Interest):
                 raise ValueError(
-                    f"Interest '{interest}' is not valid. Must be one of: {', '.join(Interest.__members__.keys())}."
+                    f"Interest '{interest}' must be an Interest enum value. Valid values are: {', '.join(Interest.__members__.keys())}."
                 )
         return value
 
@@ -214,7 +213,7 @@ class SessionInfo(BaseModel):
 
     session_id: str
     character_name: str
-    character_metadata: Dict[str, Any] = {"description": ""}
+    character_metadata: Dict[str, Any] = Field(default_factory=lambda: {"description": ""})
     user_info: UserInfo
 
 
@@ -249,3 +248,13 @@ class Ad(BaseModel):
     ad_description: str
     placement_template: str
     link: str
+
+
+class AdResponse(BaseModel):
+    """
+    Schema for validating ADCortex API responses.
+
+    Attributes:
+        ads (List[Ad]): List of ads returned by the API.
+    """
+    ads: List[Ad]
