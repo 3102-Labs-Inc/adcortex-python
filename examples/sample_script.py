@@ -3,12 +3,11 @@
 
 # sys.path.append("../src")
 
-import time
 import json
+import time
 
-
-from adcortex.client import AdcortexClient
-from adcortex.types import SessionInfo, UserInfo, Platform, Message
+from adcortex.direct_client import AdcortexClient
+from adcortex.types import Message, Platform, SessionInfo, UserInfo
 
 # Initialize the client
 session_info = SessionInfo(

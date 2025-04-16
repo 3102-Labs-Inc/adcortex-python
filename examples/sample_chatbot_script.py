@@ -4,7 +4,7 @@
 # sys.path.append("../src")
 
 from adcortex.chat_client import AdcortexChatClient
-from adcortex.types import SessionInfo, UserInfo, Platform, Message
+from adcortex.types import Message, Platform, SessionInfo, UserInfo
 
 # Initialize the chat client
 session_info = SessionInfo(
