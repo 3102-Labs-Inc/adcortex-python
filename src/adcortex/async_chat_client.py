@@ -38,7 +38,7 @@ class AsyncAdcortexChatClient:
         session_info: SessionInfo,
         context_template: Optional[str] = DEFAULT_CONTEXT_TEMPLATE,
         api_key: Optional[str] = None,
-        timeout: Optional[int] = 3,
+        timeout: Optional[int] = 10,
         log_level: Optional[int] = logging.ERROR,
         disable_logging: bool = False,
         max_queue_size: int = 100,
