@@ -53,6 +53,18 @@ Interest
    - **cooking**: Indicates an interest in cooking.
    - **all**: Represents all interests.
 
+Language
+~~~~~~~~
+
+.. py:class:: Language(Enum)
+   :noindex:
+
+   **Enumeration of supported languages.**
+
+   **Members:**
+   
+   - Various language codes (e.g., **en**, **es**, **fr**, etc.)
+
 Classes
 -------
 
@@ -70,13 +82,16 @@ UserInfo
    - **age (int)**: User's age.
    - **gender (Gender)**: User's gender.
    - **location (str)**: User's location (ISO 3166-1 alpha-2 code).
-   - **language (str)**: Preferred language (must be "english", default is "en").
+   - **language (str)**: Preferred language (must be one of the Language enum values).
    - **interests (List[Interest])**: A list of user's interests.
 
    **Validators:**
    
-   - **validate_country(value)**: Validates that ``location`` is a valid ISO 3166-1 alpha-2 country code.
-   - **validate_language(value)**: Validates that ``language`` is "english" (default is "en").
+   - **validate_age(value)**: Validates that age is greater than 0.
+   - **validate_gender(value)**: Validates that gender is a valid Gender enum value.
+   - **validate_language(value)**: Validates that language is a valid Language enum value.
+   - **validate_interests(value)**: Validates that interests are valid Interest enum values.
+   - **validate_country(value)**: Validates that location is a valid ISO 3166-1 alpha-2 country code.
 
 Platform
 ~~~~~~~~
@@ -89,7 +104,7 @@ Platform
    **Attributes:**
    
    - **name (str)**: Name of the platform.
-   - **version (str)**: Version of the platform.
+   - **varient (str)**: Variant for experimentation. Default is "default".
 
 SessionInfo
 ~~~~~~~~~~~
@@ -103,7 +118,7 @@ SessionInfo
    
    - **session_id (str)**: Unique identifier for the session.
    - **character_name (str)**: Name of the character (assistant).
-   - **character_metadata (Dict[str, Any])**: Additional metadata for the character.
+   - **character_metadata (str)**: Additional metadata for the character as a string.
    - **user_info (UserInfo)**: User information.
    - **platform (Platform)**: Platform details.
 
@@ -119,6 +134,7 @@ Message
    
    - **role (Role)**: The role of the message sender.
    - **content (str)**: The content of the message.
+   - **timestamp (float)**: The timestamp of when the message was created.
 
 Ad
 ~~
@@ -130,8 +146,19 @@ Ad
 
    **Attributes:**
    
-   - **idx (int)**: Identifier for the advertisement.
    - **ad_title (str)**: Title of the advertisement.
    - **ad_description (str)**: Description of the advertisement.
    - **placement_template (str)**: Template used for ad placement.
    - **link (str)**: URL link to the advertised product or service.
+
+AdResponse
+~~~~~~~~~
+
+.. py:class:: AdResponse(BaseModel)
+   :noindex:
+
+   **Schema for validating ADCortex API responses.**
+
+   **Attributes:**
+   
+   - **ads (List[Ad])**: List of ads returned by the API.

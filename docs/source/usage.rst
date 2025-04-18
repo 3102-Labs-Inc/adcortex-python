@@ -1,24 +1,28 @@
 Usage
 =====
 
-Below is a sample script that demonstrates how to initialize the chat client, add messages, and automatically check for ads:
+Below are examples demonstrating how to use both the synchronous and asynchronous chat clients.
+
+Synchronous Client
+-----------------
 
 .. code-block:: python
 
     from adcortex.chat_client import AdcortexChatClient
-    from adcortex.types import SessionInfo, UserInfo, Platform, Message
+    from adcortex.types import SessionInfo, UserInfo, Platform, Role, Interest, Gender
 
     # Initialize the session and user info
     session_info = SessionInfo(
         session_id="43253425",
         character_name="Alex",
-        character_metadata={"description": "Friendly and humorous assistant"},
+        character_metadata="Friendly and humorous assistant",
         user_info=UserInfo(
             user_id="12345",
             age=20,
-            gender="male",
+            gender=Gender.male,
             location="US",
-            interests=["flirting", "gaming"]
+            language="en",
+            interests=[Interest.flirting, Interest.gaming]
         ),
         platform=Platform(
             name="ChatBotX",
@@ -26,73 +30,96 @@ Below is a sample script that demonstrates how to initialize the chat client, ad
         )
     )
 
-    # Create the chat client instance.
+    # Create the chat client instance
     chat_client = AdcortexChatClient(
         session_info=session_info,
-        num_messages_before_ad=3,
-        num_messages_between_ads=10
+        timeout=5,
+        log_level=logging.INFO,
+        max_queue_size=50
     )
 
-    # Simulate conversation and check for ad responses
-    ad_response = chat_client(role="user", content="I'm looking for a new gaming setup.")
-    if ad_response:
-        print(ad_response)
+    # Simulate conversation
+    conversation = [
+        (Role.ai, "I'm looking for a desk setup for my gaming. It should be more ergonomic!"),
+        (Role.user, "Preferably something under $500."),
+    ]
 
-    ad_response = chat_client(role="ai", content="What features are you looking for?")
-    if ad_response:
-        print(ad_response)
+    # Process the conversation
+    for role, content in conversation:
+        print(f"{role.value}: {content}")
+        chat_client(role=role, content=content)
+        
+        # Check for new ads
+        latest_ad = chat_client.get_latest_ad()
+        if latest_ad:
+            context = chat_client.create_context()
+            print("Ad context generated:")
+            print(context)
+        
+        # Check client health
+        if not chat_client.is_healthy():
+            print("Client is not in a healthy state")
+            break
 
-    ad_response = chat_client(role="user", content="I need something ergonomic.")
-    if ad_response:
-        print(ad_response)
-
-This script shows how the client accumulates messages and fetches an ad when the specified message thresholds are met.
-
-Additionally, here is an example of using the AdcortexClient to fetch ads based on a list of messages:
+Asynchronous Client
+-----------------
 
 .. code-block:: python
 
-    import time
-    import json
-    from adcortex.client import AdcortexClient
-    from adcortex.types import SessionInfo, UserInfo, Platform, Message
+    import asyncio
+    from adcortex.async_chat_client import AsyncAdcortexChatClient
+    from adcortex.types import SessionInfo, UserInfo, Platform, Role, Interest, Gender
 
-    # Initialize the client
-    session_info = SessionInfo(
-        session_id="43253425",
-        character_name="Alex",
-        character_metadata={"description": "Friendly and humorous assistant"},
-        user_info=UserInfo(
-            user_id="12345",
-            age=20,
-            gender="male",
-            location="US",
-            interests=["all"]
-        ),
-        platform=Platform(
-            name="ChatBotX",
-            version="1.0.2"
+    async def main():
+        # Initialize the session and user info
+        session_info = SessionInfo(
+            session_id="43253425",
+            character_name="Alex",
+            character_metadata="Friendly and humorous assistant",
+            user_info=UserInfo(
+                user_id="12345",
+                age=20,
+                gender=Gender.male,
+                location="US",
+                language="en",
+                interests=[Interest.flirting, Interest.gaming]
+            ),
+            platform=Platform(
+                name="ChatBotX",
+                version="1.0.2"
+            )
         )
-    )
 
-    # Create an instance of AdcortexClient
-    client = AdcortexClient(session_info=session_info)
+        # Create the async chat client instance
+        chat_client = AsyncAdcortexChatClient(
+            session_info=session_info,
+            timeout=5,
+            log_level=logging.INFO,
+            max_queue_size=50
+        )
 
-    # Prepare messages
-    messages = [
-        Message(role="ai", content="I'm looking for a desk setup for my gaming. It should be more ergonomic!!"),
-        Message(role="user", content="Preferably something under $500."),
-        # Add more messages as needed...
-    ]
+        # Simulate conversation
+        conversation = [
+            (Role.ai, "I'm looking for a desk setup for my gaming. It should be more ergonomic!"),
+            (Role.user, "Preferably something under $500."),
+        ]
 
-    # Measure latency and fetch ad
-    start_time = time.time()
-    ad_response = client.fetch_ad(messages=messages)
-    end_time = time.time()
+        # Process the conversation
+        for role, content in conversation:
+            print(f"{role.value}: {content}")
+            await chat_client(role=role, content=content)
+            
+            # Check for new ads
+            latest_ad = chat_client.get_latest_ad()
+            if latest_ad:
+                context = chat_client.create_context()
+                print("Ad context generated:")
+                print(context)
+            
+            # Check client health
+            if not chat_client.is_healthy():
+                print("Client is not in a healthy state")
+                break
 
-    latency = end_time - start_time
-
-    # Print the response
-    print(f"Response content:")
-    print(json.dumps(ad_response, default=lambda o: o.__dict__, indent=4))  # Convert Ad object to dict
-    print(f"Response Time: {latency:.3f} seconds")
+    if __name__ == "__main__":
+        asyncio.run(main())

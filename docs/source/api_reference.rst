@@ -8,11 +8,12 @@ This section describes the main classes and methods of the ADCortex Chat Client 
    :nosignatures:
 
    adcortex.chat_client.AdcortexChatClient
-   adcortex.client.AdcortexClient
+   adcortex.async_chat_client.AsyncAdcortexChatClient
+   adcortex.types
 
-Detailed documentation for the ADCortexChatClient and AdcortexClient is provided below.
+Detailed documentation for the chat clients and types is provided below.
 
-ADCortexChatClient
+AdcortexChatClient
 ------------------
 
 The :class:`adcortex.chat_client.AdcortexChatClient` is the primary interface for integrating chat-based advertising into your application.
@@ -25,65 +26,94 @@ The :class:`adcortex.chat_client.AdcortexChatClient` is the primary interface fo
         session_info: SessionInfo,
         context_template: Optional[str] = DEFAULT_CONTEXT_TEMPLATE,
         api_key: Optional[str] = None,
-        num_messages_before_ad: int = 3,
-        num_messages_between_ads: int = 2,
+        timeout: Optional[int] = 3,
+        log_level: Optional[int] = logging.ERROR,
+        disable_logging: bool = False,
+        max_queue_size: int = 100,
+        circuit_breaker_threshold: int = 5,
+        circuit_breaker_timeout: int = 120,
     )
 
 - **session_info**: Instance of :class:`adcortex.types.SessionInfo` with session, character, user, and platform details.
-- **context_template**: A template string to format ad context. Default is `"Here is a product the user might like: {ad_title} - {ad_description} - {link}"`.
+- **context_template**: A template string to format ad context. Default is `"Here is a product the user might like: {ad_title} - {ad_description}: here is a sample way to present it: {placement_template}"`.
 - **api_key**: ADCORTEX API key. If not provided, it is loaded from the environment variable.
-- **num_messages_before_ad**: Number of messages before an ad is fetched.
-- **num_messages_between_ads**: Number of messages to wait between ads.
+- **timeout**: Request timeout in seconds. Default is 3.
+- **log_level**: Logging level. Default is ERROR.
+- **disable_logging**: Whether to disable logging. Default is False.
+- **max_queue_size**: Maximum number of messages in the queue. Default is 100.
+- **circuit_breaker_threshold**: Number of errors before opening circuit breaker. Default is 5.
+- **circuit_breaker_timeout**: Time in seconds before circuit breaker resets. Default is 120.
 
 **Key Methods:**
 
-- ``__call__(role: str, content: str) -> Optional[Dict[str, Any]]``  
-  Adds a message to the conversation log and checks if an ad should be fetched.
+- ``__call__(role: Role, content: str) -> None``  
+  Adds a message to the queue and processes it if conditions are met.
 
-- ``_fetch_ad() -> Optional[Dict[str, Any]]``  
-  Fetches an ad if the message criteria are met.
+- ``_process_queue() -> None``  
+  Processes all messages in the queue in a single batch.
 
-- ``_prepare_payload() -> Dict[str, Any]``  
-  Prepares the JSON payload for the ad request.
+- ``_fetch_ad_batch(messages: List[Message]) -> None``  
+  Fetches an ad based on all messages in a batch.
 
-- ``_send_request(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]``  
+- ``_prepare_batch_payload(messages: List[Message]) -> Dict[str, Any]``  
+  Prepares the JSON payload for the batch ad request.
+
+- ``_send_request(payload: Dict[str, Any]) -> None``  
   Sends an HTTP POST request to the ADCortex API.
 
-- ``_handle_response(response_data: Dict[str, Any]) -> Optional[Dict[str, Any]]``  
-  Processes the API response and returns ad details if available.
-
-- ``_should_show_ad() -> bool``  
-  Determines if an ad should be shown based on the message count.
+- ``_handle_response(response_data: Dict[str, Any]) -> None``  
+  Processes the API response and updates the latest ad.
 
 - ``create_context() -> str``  
   Generates a context string using the latest fetched ad.
 
-AdcortexClient
-------------------
+- ``get_latest_ad() -> Optional[Ad]``  
+  Gets the latest ad and clears it from memory.
 
-The :class:`adcortex.client.AdcortexClient` is used for fetching ads based on user messages without the chat context.
+- ``get_state() -> ClientState``  
+  Gets the current client state.
+
+- ``is_healthy() -> bool``  
+  Checks if the client is in a healthy state.
+
+AsyncAdcortexChatClient
+----------------------
+
+The :class:`adcortex.async_chat_client.AsyncAdcortexChatClient` provides an asynchronous interface for chat-based advertising.
 
 **Constructor:**
 
 .. code-block:: python
 
-    AdcortexClient(
+    AsyncAdcortexChatClient(
         session_info: SessionInfo,
         context_template: Optional[str] = DEFAULT_CONTEXT_TEMPLATE,
         api_key: Optional[str] = None,
+        timeout: Optional[int] = 3,
+        log_level: Optional[int] = logging.ERROR,
+        disable_logging: bool = False,
+        max_queue_size: int = 100,
+        circuit_breaker_threshold: int = 5,
+        circuit_breaker_timeout: int = 120,
     )
 
-- **session_info**: Instance of :class:`adcortex.types.SessionInfo` with session, character, user, and platform details.
-- **context_template**: A template string to format ad context. Default is an empty string.
-- **api_key**: ADCORTEX API key. If not provided, it is loaded from the environment variable.
+Parameters are the same as the synchronous client.
 
 **Key Methods:**
 
-- ``_generate_payload(messages: List[Message]) -> dict``  
-  Prepares the payload for the ad request based on the provided messages.
+- ``async __call__(role: Role, content: str) -> None``  
+  Asynchronously adds a message to the queue and processes it if conditions are met.
 
-- ``fetch_ad(messages: List[Message]) -> Ad``  
-  Sends a request to fetch an ad based on the provided messages and returns an instance of :class:`adcortex.types.Ad`.
+- ``async _process_queue() -> None``  
+  Asynchronously processes all messages in the queue in a single batch.
 
-- ``generate_context(ad: Ad) -> str``  
-  Generates a context string for the provided ad using the context template.
+- ``async _fetch_ad_batch(messages: List[Message]) -> None``  
+  Asynchronously fetches an ad based on all messages in a batch.
+
+- ``async _send_request(payload: Dict[str, Any]) -> None``  
+  Asynchronously sends an HTTP POST request to the ADCortex API.
+
+- ``async _handle_response(response_data: Dict[str, Any]) -> None``  
+  Asynchronously processes the API response and updates the latest ad.
+
+Other methods are the same as the synchronous client.

@@ -3,10 +3,22 @@
 This module defines data classes and enumerations used by the ADCortex API client.
 """
 
-from pydantic import BaseModel, validator
-from typing import List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List
+
 import pycountry
+from pydantic import BaseModel, field_validator, Field
+
+
+class Platform(BaseModel):
+    """
+    Contains platform-related metadata.
+
+    Attributes:
+        varient (str): varient for experimentation
+    """
+    name: str
+    varient: str = "default"
 
 
 class Gender(str, Enum):
@@ -61,7 +73,59 @@ class Interest(str, Enum):
     technology = "technology"
     art = "art"
     cooking = "cooking"
-    all = "all"  # Option for all interests
+    all = "all"
+
+
+class Language(Enum):
+    ar = "ar"  # Arabic
+    bg = "bg"  # Bulgarian
+    ca = "ca"  # Catalan
+    cs = "cs"  # Czech
+    da = "da"  # Danish
+    de = "de"  # German
+    el = "el"  # Greek
+    en = "en"  # English
+    es = "es"  # Spanish
+    et = "et"  # Estonian
+    fa = "fa"  # Persian
+    fi = "fi"  # Finnish
+    fr = "fr"  # French
+    gl = "gl"  # Galician
+    gu = "gu"  # Gujarati
+    he = "he"  # Hebrew
+    hi = "hi"  # Hindi
+    hr = "hr"  # Croatian
+    hu = "hu"  # Hungarian
+    hy = "hy"  # Armenian
+    id = "id"  # Indonesian
+    it = "it"  # Italian
+    ja = "ja"  # Japanese
+    ka = "ka"  # Georgian
+    ko = "ko"  # Korean
+    ku = "ku"  # Kurdish
+    lt = "lt"  # Lithuanian
+    lv = "lv"  # Latvian
+    mk = "mk"  # Macedonian
+    mn = "mn"  # Mongolian
+    mr = "mr"  # Marathi
+    ms = "ms"  # Malay
+    my = "my"  # Burmese
+    nb = "nb"  # Norwegian Bokmål
+    nl = "nl"  # Dutch
+    pl = "pl"  # Polish
+    pt = "pt"  # Portuguese
+    ro = "ro"  # Romanian
+    ru = "ru"  # Russian
+    sk = "sk"  # Slovak
+    sl = "sl"  # Slovenian
+    sq = "sq"  # Albanian
+    sr = "sr"  # Serbian
+    sv = "sv"  # Swedish
+    th = "th"  # Thai
+    tr = "tr"  # Turkish
+    uk = "uk"  # Ukrainian
+    ur = "ur"  # Urdu
+    vi = "vi"  # Vietnamese
 
 
 class UserInfo(BaseModel):
@@ -71,66 +135,86 @@ class UserInfo(BaseModel):
     Attributes:
         user_id (str): Unique identifier for the user.
         age (int): User's age.
-        gender (Gender): User's gender.
+        gender (str): User's gender (must be one of the Gender enum values).
         location (str): User's location (ISO 3166-1 alpha-2 code).
         language (str): Preferred language (must be "english").
-        interests (List[Interest]): A list of user's interests.
+        interests (List[Interest]): List of user's interests.
     """
 
     user_id: str
     age: int
-    gender: Gender
-    location: str  # Stored as ISO code.
-    language: str = "en"  # Default to "english"
+    gender: str
+    location: str
+    language: str
     interests: List[Interest]
 
-    @validator("location")
+    @field_validator("age")
+    def validate_age(cls, value):
+        """
+        Validate that age is greater than 0.
+        """
+        if value <= 0:
+            raise ValueError("Age must be greater than 0")
+        return value
+
+    @field_validator("gender")
+    def validate_gender(cls, value):
+        """
+        Validate that the provided gender is one of the defined Gender enum values.
+        """
+        if value not in Gender.__members__:
+            raise ValueError(
+                f"Gender must be one of: {', '.join(Gender.__members__.keys())}."
+            )
+        return value
+
+    @field_validator("language")
+    def validate_language(cls, value):
+        """
+        Validate that the provided gender is one of the defined Gender enum values.
+        """
+        if value not in Language.__members__:
+            raise ValueError(
+                f"Language must be one of: {', '.join(Language.__members__.keys())}."
+            )
+        return value
+
+    @field_validator("interests")
+    def validate_interests(cls, value):
+        """
+        Validate that the provided interests list contains valid Interest enum values.
+        """
+        for interest in value:
+            if not isinstance(interest, Interest):
+                raise ValueError(
+                    f"Interest '{interest}' must be an Interest enum value. Valid values are: {', '.join(Interest.__members__.keys())}."
+                )
+        return value
+
+    @field_validator("location")
     def validate_country(cls, value):
         """
         Validate that the provided country code is a valid ISO 3166-1 alpha-2 code.
         """
-        if value not in [country.alpha_2 for country in pycountry.countries]:
-            raise ValueError(f"{value} is not a valid country code.")
-        return value
-
-    @validator("language")
-    def validate_language(cls, value):
-        """
-        Validate that the provided language code is "english".
-        """
-        if value.lower() != "en":
-            raise ValueError("Language must be 'english'.")
-        return value
-
-
-class Platform(BaseModel):
-    """
-    Contains platform-related metadata.
-
-    Attributes:
-        name (str): Name of the platform.
-        version (str): Version of the platform.
-    """
-
-    name: str
-    version: str
+        country = pycountry.countries.get(alpha_2=value.upper())
+        return value if country else None
 
 
 class SessionInfo(BaseModel):
     """
-    Stores session details including user and platform information.
+    Stores session details including user.
 
     Attributes:
         session_id (str): Unique identifier for the session.
         character_name (str): Name of the character (assistant).
-        character_metadata (Dict[str, Any]): Additional metadata for the character.
+        character_metadata (str): Additional metadata for the character as a string.
         user_info (UserInfo): User information.
-        platform (Platform): Platform details.
+        platform (Platform): Platform information.
     """
 
     session_id: str
     character_name: str
-    character_metadata: Dict[str, Any] = {"description": ""}
+    character_metadata: str
     user_info: UserInfo
     platform: Platform
 
@@ -142,10 +226,12 @@ class Message(BaseModel):
     Attributes:
         role (Role): The role of the message sender (either user or AI).
         content (str): The content of the message.
+        timestamp (float): The timestamp of when the message was created.
     """
 
     role: Role
     content: str
+    # timestamp: float  # Add timestamp field
 
 
 class Ad(BaseModel):
@@ -160,8 +246,17 @@ class Ad(BaseModel):
         link (str): URL link to the advertised product or service.
     """
 
-    idx: int
     ad_title: str
     ad_description: str
     placement_template: str
     link: str
+
+
+class AdResponse(BaseModel):
+    """
+    Schema for validating ADCortex API responses.
+
+    Attributes:
+        ads (List[Ad]): List of ads returned by the API.
+    """
+    ads: List[Ad]
