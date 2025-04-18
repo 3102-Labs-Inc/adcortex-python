@@ -64,6 +64,18 @@ autodoc_default_options = {
     "special-members": "__call__",
 }
 
+# Pygments configuration
+pygments_style = "sphinx"
+pygments_dark_style = "monokai"
+
+# Syntax highlighting options
+highlight_language = "python3"
+highlight_options = {
+    "stripall": True,
+    "stripnl": True,
+    "startinline": True,
+}
+
 # -- Options for HTML output -------------------------------------------------
 html_theme = "furo"
 html_static_path = ["_static"]
