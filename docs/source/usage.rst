@@ -108,7 +108,7 @@ Asynchronous Client
         # Create the async chat client instance
         chat_client = AsyncAdcortexChatClient(
             session_info=session_info,
-            timeout=5,
+            timeout=10,
             log_level=logging.INFO,
             max_queue_size=50
         )
