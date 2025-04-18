@@ -1,1 +1,8 @@
 toml
+sphinx-copybutton
+sphinx-rtd-theme
+sphinx-autodoc-typehints
+sphinx-autodoc-typehints-extension
+sphinx-autodoc-typehints-extension-2
+sphinx-autodoc-typehints-extension-3
+sphinx-autodoc-typehints-extension-4
