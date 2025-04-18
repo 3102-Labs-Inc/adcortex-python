@@ -83,9 +83,9 @@ html_static_path = ["_static"]
 # Theme options
 html_theme_options = {
     "navigation_with_keys": True,
-    "source_repository": "https://github.com/3102labs/adcortex-python",
-    "source_branch": "main",
-    "source_directory": "docs/source/",
+    "source_repository": None,
+    "source_branch": None,
+    "source_directory": None,
     "footer_icons": [
         {
             "name": "GitHub",
