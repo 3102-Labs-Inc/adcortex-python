@@ -49,21 +49,6 @@ The :class:`adcortex.chat_client.AdcortexChatClient` is the primary interface fo
 - ``__call__(role: Role, content: str) -> None``  
   Adds a message to the queue and processes it if conditions are met.
 
-- ``_process_queue() -> None``  
-  Processes all messages in the queue in a single batch.
-
-- ``_fetch_ad_batch(messages: List[Message]) -> None``  
-  Fetches an ad based on all messages in a batch.
-
-- ``_prepare_batch_payload(messages: List[Message]) -> Dict[str, Any]``  
-  Prepares the JSON payload for the batch ad request.
-
-- ``_send_request(payload: Dict[str, Any]) -> None``  
-  Sends an HTTP POST request to the ADCortex API.
-
-- ``_handle_response(response_data: Dict[str, Any]) -> None``  
-  Processes the API response and updates the latest ad.
-
 - ``create_context() -> str``  
   Generates a context string using the latest fetched ad.
 
@@ -103,17 +88,5 @@ Parameters are the same as the synchronous client.
 
 - ``async __call__(role: Role, content: str) -> None``  
   Asynchronously adds a message to the queue and processes it if conditions are met.
-
-- ``async _process_queue() -> None``  
-  Asynchronously processes all messages in the queue in a single batch.
-
-- ``async _fetch_ad_batch(messages: List[Message]) -> None``  
-  Asynchronously fetches an ad based on all messages in a batch.
-
-- ``async _send_request(payload: Dict[str, Any]) -> None``  
-  Asynchronously sends an HTTP POST request to the ADCortex API.
-
-- ``async _handle_response(response_data: Dict[str, Any]) -> None``  
-  Asynchronously processes the API response and updates the latest ad.
 
 Other methods are the same as the synchronous client.
