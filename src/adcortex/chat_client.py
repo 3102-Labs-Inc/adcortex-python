@@ -1,27 +1,28 @@
-"""Chat Client for ADCortex API"""
+"""Chat Client for ADCortex API with sequential message processing"""
 
 import os
-import uuid  # Import the uuid module
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timezone, timedelta
 import logging
 from typing import Any, Dict, List, Optional
+from enum import Enum, auto
 
 import httpx
 from dotenv import load_dotenv
 from pydantic import ValidationError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from .types import Ad, AdResponse, Message, Role, SessionInfo
+from .state import ClientState, CircuitBreaker
 
 # Load environment variables from .env file
 load_dotenv()
-
 
 DEFAULT_CONTEXT_TEMPLATE = "Here is a product the user might like: {ad_title} - {ad_description}: here is a sample way to present it: {placement_template}"
 AD_FETCH_URL = "https://adcortex.3102labs.com/ads/matchv2"
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
 
 class AdcortexChatClient:
     def __init__(
@@ -32,6 +33,9 @@ class AdcortexChatClient:
         timeout: Optional[int] = 3,
         log_level: Optional[int] = logging.ERROR,
         disable_logging: bool = False,
+        max_queue_size: int = 100,
+        circuit_breaker_threshold: int = 5,
+        circuit_breaker_timeout: int = 120,  # 2 minutes
     ):
         self._session_info = session_info
         self._context_template = context_template
@@ -43,7 +47,21 @@ class AdcortexChatClient:
         self._timeout = timeout
         self.latest_ad = None
         self._disable_logging = disable_logging
-
+        
+        # Queue management
+        self._message_queue: List[Message] = []
+        self._max_queue_size = max_queue_size
+        
+        # State management
+        self._state = ClientState.IDLE
+        
+        # Circuit breaker
+        self._circuit_breaker = CircuitBreaker(
+            threshold=circuit_breaker_threshold,
+            timeout=circuit_breaker_timeout,
+            disable_logging=disable_logging
+        )
+        
         # Configure logging
         if not disable_logging:
             logger.setLevel(log_level)
@@ -66,38 +84,84 @@ class AdcortexChatClient:
         if not self._disable_logging:
             logger.error(message)
 
-    def __call__(self, role: Role, content: str) -> Optional[Dict[str, Any]]:
-        """Add a message and fetch an ad if applicable."""
+    def __call__(self, role: Role, content: str) -> None:
+        """Add a message to the queue and process it."""
         current_message = Message(
-            role=role, content=content, timestamp=datetime.now(timezone.utc).timestamp()
+            role=role,
+            content=content,
+            timestamp=datetime.now(timezone.utc).timestamp()
         )
-        self._log_info(f"Message added: {role} - {content}")
+            
+        # Always add message to queue, remove oldest if full
+        if len(self._message_queue) >= self._max_queue_size:
+            self._message_queue.pop(0)  # Remove oldest message
+            self._log_info("Queue full, removed oldest message")
+        
+        self._message_queue.append(current_message)
+        self._log_info(f"Message queued: {role} - {content}")
 
-        return self._fetch_ad(current_message)
+        # Process queue if not already processing, role is user, and circuit breaker is closed
+        if self._state == ClientState.IDLE and role == Role.user and not self._circuit_breaker.is_open():
+            self._state = ClientState.PROCESSING
+            try:
+                self._process_queue()
+            except Exception as e:
+                self._log_error(f"Processing failed: {e}")
+                self._circuit_breaker.record_error()
+            finally:
+                self._state = ClientState.IDLE
 
-    def _fetch_ad(self, current_message: Message) -> Optional[Dict[str, Any]]:
-        """Fetch an ad based on the current messages."""
+    def _process_queue(self) -> None:
+        """Process all messages in the queue in a single batch."""
+        if not self._message_queue:
+            return
 
-        payload = self._prepare_payload(current_message)
-        response_data = self._send_request(payload)
+        # Take a snapshot of current messages
+        messages_to_process = list(self._message_queue)
+        self._log_info(f"Processing {len(messages_to_process)} messages in batch")
+        
+        try:
+            self._fetch_ad_batch(messages_to_process)
+            # Only remove messages that were successfully processed
+            self._message_queue = self._message_queue[len(messages_to_process):]
+        except httpx.TimeoutException as e:
+            self._log_error(f"Batch request timed out: {e}")
+            self._circuit_breaker.record_error()
+            raise
+        except httpx.RequestError as e:
+            self._log_error(f"Batch request failed: {e}")
+            self._circuit_breaker.record_error()
+            raise
+        except ValidationError as e:
+            self._log_error(f"Invalid response format: {e}")
+            self._circuit_breaker.record_error()
+            raise
+        except Exception as e:
+            self._log_error(f"Unexpected error processing batch: {e}")
+            self._circuit_breaker.record_error()
+            raise
 
-        if response_data:
-            return self._handle_response(response_data)
-        return None
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((httpx.TimeoutException, httpx.RequestError))
+    )
+    def _fetch_ad_batch(self, messages: List[Message]) -> None:
+        """Fetch an ad based on all messages in a batch."""
+        payload = self._prepare_batch_payload(messages)
+        self._send_request(payload)
 
-    def _prepare_payload(self, current_message: Message) -> Dict[str, Any]:
-        """Prepare the payload for the ad request."""
-
-        payload = {
+    def _prepare_batch_payload(self, messages: List[Message]) -> Dict[str, Any]:
+        """Prepare the payload for the batch ad request."""
+        return {
             "RGUID": str(uuid.uuid4()),
             "session_info": self._session_info.model_dump(),
             "user_data": self._session_info.user_info.model_dump(),
-            "messages": [current_message.model_dump()],
+            "messages": [msg.model_dump() for msg in messages],
         }
-        return payload
 
-    def _send_request(self, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Send the request to the ADCortex API and return the response."""
+    def _send_request(self, payload: Dict[str, Any]) -> None:
+        """Send the request to the ADCortex API synchronously."""
         try:
             with httpx.Client(timeout=self._timeout) as client:
                 response = client.post(
@@ -106,26 +170,25 @@ class AdcortexChatClient:
                     json=payload
                 )
                 response.raise_for_status()
-                return response.json()
+                self._handle_response(response.json())
         except httpx.TimeoutException:
             self._log_error("Request timed out")
-            return None
+            raise
         except httpx.RequestError as e:
             self._log_error(f"Error fetching ad: {e}")
-            return None
+            raise
 
-    def _handle_response(
-        self, response_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _handle_response(self, response_data: Dict[str, Any]) -> None:
         """Handle the response from the ad request."""
         try:
             parsed_response = AdResponse(**response_data)
             if parsed_response.ads:
                 self.latest_ad = parsed_response.ads[0]
                 self._log_info(f"Ad fetched: {self.latest_ad.ad_title}")
-                return self.latest_ad
-            self._log_info("No ads returned")
-            return {}
+                return parsed_response.ads[0]
+            else:
+                self._log_info("No ads returned")
+                return {}
         except ValidationError as e:
             self._log_error(f"Invalid ad response format: {e}")
             return {}
@@ -139,3 +202,14 @@ class AdcortexChatClient:
     def get_latest_ad(self) -> Optional[Ad]:
         """Get the latest ad."""
         return self.latest_ad
+
+    def get_state(self) -> ClientState:
+        """Get current client state."""
+        return self._state
+
+    def is_healthy(self) -> bool:
+        """Check if the client is in a healthy state."""
+        return (
+            not self._circuit_breaker.is_open()
+            and len(self._message_queue) < self._max_queue_size
+        )
