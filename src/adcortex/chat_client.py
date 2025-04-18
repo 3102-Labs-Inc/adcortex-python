@@ -149,15 +149,33 @@ class AdcortexChatClient:
     def _fetch_ad_batch(self, messages: List[Message]) -> None:
         """Fetch an ad based on all messages in a batch."""
         payload = self._prepare_batch_payload(messages)
+        print(payload)
         self._send_request(payload)
 
     def _prepare_batch_payload(self, messages: List[Message]) -> Dict[str, Any]:
         """Prepare the payload for the batch ad request."""
+        # Convert session info to dict and handle enum values
+        session_info_dict = self._session_info.model_dump()
+        user_info_dict = session_info_dict["user_info"]
+        user_info_dict["interests"] = [interest.value for interest in session_info_dict["user_info"]["interests"]]
+        
+        # Convert messages to dict and handle enum values
+        messages_dict = []
+        for msg in messages:
+            msg_dict = msg.model_dump()
+            msg_dict["role"] = msg_dict["role"].value
+            messages_dict.append(msg_dict)
+        
         return {
             "RGUID": str(uuid.uuid4()),
-            "session_info": self._session_info.model_dump(),
-            "user_data": self._session_info.user_info.model_dump(),
-            "messages": [msg.model_dump() for msg in messages],
+            "session_info": {
+                "session_id": session_info_dict["session_id"],
+                "character_name": session_info_dict["character_name"],
+                "character_metadata": session_info_dict["character_metadata"],
+            },
+            "user_data": user_info_dict,
+            "messages": messages_dict,
+            "platform": session_info_dict["platform"]
         }
 
     def _send_request(self, payload: Dict[str, Any]) -> None:
@@ -193,15 +211,15 @@ class AdcortexChatClient:
             self._log_error(f"Invalid ad response format: {e}")
             return {}
 
-    def create_context(self) -> str:
+    def create_context(self, latest_ad: Ad) -> str:
         """Create a context string for the last seen ad."""
-        if self.latest_ad:
-            return self._context_template.format(**self.latest_ad.model_dump())
-        return ""
+        return self._context_template.format(**latest_ad.model_dump())
 
     def get_latest_ad(self) -> Optional[Ad]:
-        """Get the latest ad."""
-        return self.latest_ad
+        """Get the latest ad and clear it from memory."""
+        latest = self.latest_ad
+        self.latest_ad = None
+        return latest
 
     def get_state(self) -> ClientState:
         """Get current client state."""

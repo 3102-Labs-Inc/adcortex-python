@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
+from enum import Enum, auto
 
 import httpx
 from dotenv import load_dotenv
@@ -169,11 +170,28 @@ class AsyncAdcortexChatClient:
 
     def _prepare_batch_payload(self, messages: List[Message]) -> Dict[str, Any]:
         """Prepare the payload for the batch ad request."""
+        # Convert session info to dict and handle enum values
+        session_info_dict = self._session_info.model_dump()
+        user_info_dict = session_info_dict["user_info"]
+        user_info_dict["interests"] = [interest.value for interest in session_info_dict["user_info"]["interests"]]
+        
+        # Convert messages to dict and handle enum values
+        messages_dict = []
+        for msg in messages:
+            msg_dict = msg.model_dump()
+            msg_dict["role"] = msg_dict["role"].value
+            messages_dict.append(msg_dict)
+        
         return {
             "RGUID": str(uuid4()),
-            "session_info": self._session_info.model_dump(),
-            "user_data": self._session_info.user_info.model_dump(),
-            "messages": [msg.model_dump() for msg in messages],
+            "session_info": {
+                "session_id": session_info_dict["session_id"],
+                "character_name": session_info_dict["character_name"],
+                "character_metadata": session_info_dict["character_metadata"],
+            },
+            "user_data": user_info_dict,
+            "messages": messages_dict,
+            "platform": session_info_dict["platform"]
         }
 
     async def _send_request(self, payload: Dict[str, Any]) -> None:
@@ -215,8 +233,10 @@ class AsyncAdcortexChatClient:
         return ""
 
     def get_latest_ad(self) -> Optional[Ad]:
-        """Get the latest ad."""
-        return self.latest_ad
+        """Get the latest ad and clear it from memory."""
+        latest = self.latest_ad
+        self.latest_ad = None
+        return latest
 
     def get_state(self) -> ClientState:
         """Get current client state."""

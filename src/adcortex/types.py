@@ -207,14 +207,16 @@ class SessionInfo(BaseModel):
     Attributes:
         session_id (str): Unique identifier for the session.
         character_name (str): Name of the character (assistant).
-        character_metadata (Dict[str, Any]): Additional metadata for the character.
+        character_metadata (str): Additional metadata for the character as a string.
         user_info (UserInfo): User information.
+        platform (Platform): Platform information.
     """
 
     session_id: str
     character_name: str
-    character_metadata: Dict[str, Any] = Field(default_factory=lambda: {"description": ""})
+    character_metadata: str
     user_info: UserInfo
+    platform: Platform
 
 
 class Message(BaseModel):
@@ -229,7 +231,7 @@ class Message(BaseModel):
 
     role: Role
     content: str
-    timestamp: float  # Add timestamp field
+    # timestamp: float  # Add timestamp field
 
 
 class Ad(BaseModel):
