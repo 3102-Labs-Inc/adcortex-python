@@ -5,66 +5,6 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Code blocks */
-.highlight {
-    background: var(--color-code-background);
-    border-radius: 0.5rem;
-    margin: 1rem 0;
-    position: relative;
-    border: 1px solid var(--color-code-border);
-}
-
-.highlight pre {
-    margin: 0;
-    padding: 1rem;
-    overflow-x: auto;
-    background: transparent !important;
-}
-
-.highlight .gp {
-    color: var(--color-code-foreground);
-    font-weight: bold;
-    opacity: 1 !important;
-}
-
-.highlight .k {
-    color: var(--color-code-keyword);
-    font-weight: bold;
-    opacity: 1 !important;
-}
-
-.highlight .kn {
-    color: var(--color-code-keyword);
-    font-weight: bold;
-    opacity: 1 !important;
-}
-
-.highlight .kt {
-    color: var(--color-code-type);
-    opacity: 1 !important;
-}
-
-.highlight .s {
-    color: var(--color-code-string);
-    opacity: 1 !important;
-}
-
-.highlight .mi {
-    color: var(--color-code-number);
-    opacity: 1 !important;
-}
-
-.highlight .c1 {
-    color: var(--color-code-comment);
-    font-style: italic;
-    opacity: 1 !important;
-}
-
-/* Ensure all code elements are fully visible */
-.highlight * {
-    opacity: 1 !important;
-}
-
 /* API reference sections */
 .section {
     margin-bottom: 2em;
@@ -175,8 +115,6 @@ a:hover {
 
 .copybtn:hover {
     opacity: 1;
-    background-color: var(--color-code-background);
-    border-color: var(--color-code-border);
 }
 
 /* Collapse button */
@@ -198,32 +136,6 @@ a:hover {
     border-color: #ced4da;
 }
 
-/* Code block line numbers */
-.linenos {
-    color: var(--color-code-linenos);
-    padding-right: 1rem;
-    border-right: 1px solid var(--color-code-border);
-    user-select: none;
-}
-
-/* Inline code */
-code {
-    background-color: var(--color-code-background);
-    padding: 0.2em 0.4em;
-    border-radius: 0.25rem;
-    font-size: 0.875em;
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .highlight {
-    background-color: var(--color-code-background);
-    border-color: var(--color-code-border);
-}
-
-[data-theme="dark"] .highlight pre {
-    background: transparent !important;
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
     .content {
@@ -232,14 +144,6 @@ code {
     
     .sidebar {
         padding: 1em;
-    }
-    
-    .highlight {
-        margin: 0.5rem 0;
-    }
-    
-    .highlight pre {
-        padding: 0.75rem;
     }
     
     .copybtn {
