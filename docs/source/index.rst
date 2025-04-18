@@ -15,10 +15,3 @@ This documentation covers installation, usage, API reference, and details on the
    usage
    api_reference
    types
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
