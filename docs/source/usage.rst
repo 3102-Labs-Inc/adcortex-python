@@ -3,6 +3,21 @@ Usage
 
 Below are examples demonstrating how to use both the synchronous and asynchronous chat clients.
 
+Production Configuration
+----------------------
+
+For production environments, it's recommended to disable logging to improve performance:
+
+.. code-block:: python
+
+    # Production configuration with logging disabled
+    chat_client = AdcortexChatClient(
+        session_info=session_info,
+        disable_logging=True,  # Disable logging in production
+        timeout=5,
+        max_queue_size=50
+    )
+
 Synchronous Client
 -----------------
 

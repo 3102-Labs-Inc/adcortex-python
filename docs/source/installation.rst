@@ -30,15 +30,4 @@ To install the ADCortex Chat Client library, follow these steps:
 
    These will be installed automatically when installing the package.
 
-4. **Optional Dependencies**
-
-   For development and testing:
-   
-   - pytest
-   - pytest-asyncio
-   - pytest-cov
-   - black
-   - isort
-   - mypy
-
 After these steps, the library is ready to use.
